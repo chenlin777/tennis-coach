@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>视频隐私预处理 · Tennis Coach</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <span class="eyebrow">TENNIS COACH · 本地原型</span>
+    <h1>先处理隐私，再分享视频</h1>
+    <p>仅在本机处理，尚未上传。选中的视频只在此浏览器中读取；原文件不会被修改。</p>
+  </header>
+
+  <main>
+    <section class="file-bar" aria-label="选择视频">
+      <label class="button primary file-button" for="videoFile">选择本机视频</label>
+      <input id="videoFile" type="file" accept="video/*">
+      <div class="file-details">
+        <strong id="fileName">还没有选择视频</strong>
+        <span id="fileMeta">建议先用一段短视频体验</span>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <section class="preview-panel" aria-labelledby="previewTitle">
+        <div class="panel-heading">
+          <h2 id="previewTitle">处理效果预览</h2>
+          <label class="compact"><input id="showOutlines" type="checkbox" checked disabled> 显示选区边框</label>
+        </div>
+        <div id="emptyPreview" class="empty-preview"><span class="play-symbol" aria-hidden="true">▷</span><p>选择视频后，可以播放或暂停画选区</p></div>
+        <div id="stage" class="stage" hidden>
+          <canvas id="videoCanvas" aria-label="处理后的视频预览"></canvas>
+          <canvas id="overlayCanvas" aria-label="用鼠标或手指拖动，画出处理区域"></canvas>
+        </div>
+        <video id="sourceVideo" preload="metadata" muted playsinline hidden></video>
+        <p id="drawingHint" class="drawing-hint" aria-live="polite">选区固定在画面上，不会自动追踪移动的人。</p>
+        <div class="transport">
+          <button id="playPause" type="button" disabled>播放</button>
+          <input id="timeline" type="range" min="0" max="1" step="0.01" value="0" aria-label="视频进度" disabled>
+          <output id="timeDisplay">00:00 / 00:00</output>
+        </div>
+        <div class="preview-footer">
+          <label for="playbackRate">预览速度</label>
+          <select id="playbackRate" disabled>
+            <option value="0.25">0.25 倍</option>
+            <option value="0.5">0.5 倍</option>
+            <option value="1" selected>正常速度</option>
+          </select>
+          <span>预览和导出均不含声音</span>
+        </div>
+      </section>
+
+      <aside class="settings-panel" aria-labelledby="settingsTitle">
+        <h2 id="settingsTitle">可选隐私处理</h2>
+        <fieldset id="faceOptions" disabled>
+          <legend>1. 脸部遮盖</legend>
+          <label><input type="radio" name="faceMode" value="none" checked> 不处理</label>
+          <label><input type="radio" name="faceMode" value="manual"> 手动画固定遮盖区</label>
+          <p class="help">这不是自动人脸识别。遮盖区为不透明色块；可以画多个，覆盖头部移动的范围。</p>
+          <div class="button-row">
+            <button id="drawFace" type="button" disabled>画遮盖区</button>
+            <button id="clearFaces" class="quiet" type="button" disabled>清除</button>
+          </div>
+          <p id="faceCount" class="selection-count">尚未画遮盖区</p>
+        </fieldset>
+        <fieldset id="backgroundOptions" disabled>
+          <legend>2. 环境像素化</legend>
+          <label><input type="radio" name="backgroundMode" value="none" checked> 不处理</label>
+          <label><input type="radio" name="backgroundMode" value="keep"> 保留框内，框外像素化</label>
+          <p class="help">这不是人体分割。框内的背景仍然可见。请尽量保留全身、球拍和球的路线。</p>
+          <div class="button-row">
+            <button id="drawKeep" type="button" disabled>画保留区</button>
+            <button id="clearKeep" class="quiet" type="button" disabled>清除</button>
+          </div>
+          <p id="keepStatus" class="selection-count">尚未画保留区</p>
+        </fieldset>
+        <div class="note">
+          <strong>导出前，请完整播放检查</strong>
+          <p>固定选区可能漏掉移动的人脸；环境像素化也可能保留场地线索。遮住脸后无法观察眼睛，框外的球可能看不清。请按分享目的选择。</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="export-panel" aria-labelledby="exportTitle">
+      <div>
+        <h2 id="exportTitle">导出处理后的视频</h2>
+        <p>生成一份静音 WebM 副本，选区边框不会导出。导出按正常速度播放，耗时约等于视频长度；请保持此页面在前台。</p>
+      </div>
+      <div class="export-actions">
+        <button id="exportVideo" class="primary" type="button" disabled>导出静音视频</button>
+        <button id="cancelExport" type="button" hidden>取消导出</button>
+        <a id="downloadVideo" class="button download" download hidden>下载处理后的视频</a>
+      </div>
+      <progress id="exportProgress" max="100" value="0" aria-label="导出进度" hidden></progress>
+      <p id="status" role="status" aria-live="polite">可以不打码，也可以按需开启脸部或环境处理。</p>
+    </section>
+  </main>
+  <footer>当前只做隐私预处理，尚未进行动作识别或教学评分。</footer>
+</body>
+</html>

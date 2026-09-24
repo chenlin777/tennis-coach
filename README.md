@@ -6,7 +6,23 @@
 
 ## 当前状态
 
-项目初始化阶段。当前仓库包含项目说明、开发路线和教学案例模板，尚无可运行的视频分析程序，也没有训练完成的模型或效果评测。
+已有可运行的本地视频隐私预处理原型：选择视频、慢放预览、可选脸部遮盖与环境像素化、导出静音副本。当前使用手动固定选区，尚未接入自动人脸跟踪、人体姿态识别或教学评分。
+
+## 启动隐私预处理
+
+Windows 用户安装 Python 3 后，双击项目里的 `start-privacy.cmd`，浏览器会打开本机页面。保持启动窗口运行，结束时关闭窗口即可。
+
+也可以在项目目录运行：
+
+```powershell
+python serve.py --open
+```
+
+程序只使用 Python 标准库与浏览器能力，不需要为使用原型安装机器学习依赖。推荐使用近期版本的 Edge 或 Chrome。若默认端口被占用，可运行 `python serve.py --port 8766 --open`。
+
+选择本机视频后，脸部和环境都可以保持“不处理”，也可以分别开启、在画面上拖动画框。完整预览后导出一份静音 WebM。固定框不会跟踪运动；环境保留框内的背景仍然可见。原片不修改，视频不上传。
+
+详见 [隐私处理说明](docs/PRIVACY.md)。
 
 ## 第一版目标
 
@@ -52,3 +68,18 @@ local/
 欢迎贡献软件、明确的教学案例、标注方法和可复现的评测。讨论规则时请提供适用情境、视频证据、例外和验证方法，并区分已验证结论与提议。
 
 本仓库的原创代码和文档采用 [MIT License](LICENSE)。第三方模型、依赖和数据遵循各自许可证；使用或分发前分别核对。原始学员视频和个人记录不随代码默认公开。
+
+## 开发检查
+
+静态服务检查不需要第三方依赖：
+
+```powershell
+python -m unittest discover -s tests -p test_server.py -v
+```
+
+浏览器测试使用 `requirements-dev.txt` 中的开发依赖和本机 Edge，测试素材为程序生成的合成视频，不使用真实学员视频：
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -p test_privacy_browser.py -v
+```
