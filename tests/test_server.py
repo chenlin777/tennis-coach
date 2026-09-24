@@ -31,19 +31,25 @@ class StaticServerTests(unittest.TestCase):
             connection.close()
 
     def test_static_assets_and_no_external_connections_policy(self):
-        for path in ("/", "/index.html", "/app.js", "/styles.css"):
+        for path in ("/", "/index.html", "/app.js", "/styles.css", "/auto_privacy.js"):
             with self.subTest(path=path):
                 status, headers, body = self.request(path)
                 self.assertEqual(status, 200)
                 self.assertTrue(body)
-                self.assertIn("connect-src 'none'", headers["Content-Security-Policy"])
-                self.assertIn("form-action 'none'", headers["Content-Security-Policy"])
+                policy = headers["Content-Security-Policy"]
+                directives = {parts[0]: parts[1:] for rule in policy.split(";") if (parts := rule.split())}
+                self.assertEqual(directives["connect-src"], ["'self'"])
+                self.assertEqual(set(directives["script-src"]), {"'self'", "'wasm-unsafe-eval'"})
+                self.assertEqual(directives["default-src"], ["'none'"])
+                self.assertEqual(directives["form-action"], ["'none'"])
                 self.assertEqual(headers["Cache-Control"], "no-store")
 
     def test_private_paths_and_traversal_are_not_served(self):
         for path in (
             "/local/videos/wall_practice.mp4", "/.git/config", "/README.md", "/serve.py",
             "/../local/videos/wall_practice.mp4", "/%2e%2e/local/", "/web/../local/",
+            "/vendor/", "/vendor/models/", "/vendor/models/../../local/videos/wall_practice.mp4",
+            "/vendor/models/not-allowlisted.tflite", "/vendor/mediapipe/../README.md",
         ):
             with self.subTest(path=path):
                 self.assertEqual(self.request(path)[0], 404)

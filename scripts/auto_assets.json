@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "package": {
+    "name": "@mediapipe/tasks-vision",
+    "version": "1.0.1",
+    "url": "https://registry.npmjs.org/@mediapipe/tasks-vision/-/tasks-vision-1.0.1.tgz",
+    "integrity": "sha512-rvRE2FmAZ6ZxKSw7wq+e+jQDpN3t1B/tD2mJz9SmAzb1msoDkd4dMoE4wAh8Z30Um0PQwLiHr9QtomhmXk3aUQ==",
+    "bytes": 10728587,
+    "files": {
+      "package.json": "f685301c07427e1d19a53b08afa586e5699aa1dfc2dd8c641887cc2c821b245e",
+      "vision_bundle.mjs": "d885630c297c0b20b1fe86096cb06291c4c8080876f27852e724f24ac603713f",
+      "wasm/vision_wasm_internal.js": "e170ee67dd4e16c1a6fcd8840a206687e5a59b22c20e4a902bc445b095454d73",
+      "wasm/vision_wasm_module_internal.js": "da8934057f147b622e82cfb4c0dbd85461c598e268588b5a8ba9ca963a8ff82d",
+      "wasm/vision_wasm_nosimd_internal.js": "e81d715a3d42cc3373602eb2f7aff795d164934db680e32496b65dab537f9658",
+      "wasm/vision_wasm_internal.wasm": "8da277a733926eacd0474b8704b36742d6ec3231c57a860c5b889dff8f1df886",
+      "wasm/vision_wasm_module_internal.wasm": "2dabd8e23c60984628beb7bb338764c81a08e6837145273f59578684b5d53c1b",
+      "wasm/vision_wasm_nosimd_internal.wasm": "a28483cd42e74e855bf5ebdb6b40d9b66a5b49e35e95020bc97669e6822a3192"
+    }
+  },
+  "assets": [
+    {
+      "path": "models/blaze_face_full_range.tflite",
+      "url": "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_full_range/float16/1/blaze_face_full_range.tflite",
+      "sha256": "3698b18f063835bc609069ef052228fbe86d9c9a6dc8dcb7c7c2d69aed2b181b",
+      "bytes": 1083786
+    },
+    {
+      "path": "models/pose_landmarker_lite.task",
+      "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+      "sha256": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a",
+      "bytes": 5777746
+    },
+    {
+      "path": "mediapipe/LICENSE",
+      "url": "https://raw.githubusercontent.com/google-ai-edge/mediapipe/6756ba4d59bdd8ac44173df8d4ab4069c0a747ec/LICENSE",
+      "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8",
+      "bytes": 12331
+    },
+    {
+      "path": "models/blaze_face_full_range.model-card.pdf",
+      "url": "https://storage.googleapis.com/mediapipe-assets/MediaPipe%20BlazeFace%20Model%20Card%20%28Full%20Range%29.pdf",
+      "sha256": "ef24b99475d69bd0e52f504cfd9a17a220121b925dac3e7f7042147ebd6243d5",
+      "bytes": 425555
+    },
+    {
+      "path": "models/pose_landmarker_lite.model-card.pdf",
+      "url": "https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf",
+      "sha256": "e982460cedece5ad9a46aa8f13523328e9ab95d7d5b2b8c99b33f13f6a79ca86",
+      "bytes": 1398977
+    }
+  ]
+}

@@ -43,7 +43,7 @@ def browser_executable():
     return next((candidate for candidate in candidates if candidate and Path(candidate).is_file()), None)
 
 
-class PrivacyBrowserTests(unittest.TestCase):
+class BrowserTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         executable = browser_executable()
@@ -107,7 +107,7 @@ class PrivacyBrowserTests(unittest.TestCase):
         self.page.wait_for_function("""() => {
             const video = document.getElementById('sourceVideo');
             return video.readyState >= 2 && Number.isFinite(video.duration)
-                && video.duration > 0 && !document.getElementById('exportVideo').disabled;
+                && video.duration > 0 && !document.getElementById('playPause').disabled;
         }""")
         expect(self.page.locator("#fileMeta")).to_contain_text("640 × 360")
         brightness = self.page.locator("#videoCanvas").evaluate("""canvas => {
@@ -177,6 +177,7 @@ class PrivacyBrowserTests(unittest.TestCase):
                         self.assertLessEqual(max(abs(actual[c] - MASK_RGB[c]) for c in range(3)), 10,
                                              f"Mask missing in frame {index} at ({x}, {y}): {list(actual)}")
 
+class PrivacyBrowserTests(BrowserTestCase):
     def test_privacy_workflow_pixels_export_cancel_and_reset(self):
         for selector in ("#playPause", "#timeline", "#exportVideo"):
             expect(self.page.locator(selector)).to_be_disabled()

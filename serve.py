@@ -16,10 +16,20 @@ ASSETS = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+    "/auto_privacy.js": ("auto_privacy.js", "text/javascript; charset=utf-8"),
 }
+VENDOR_ASSETS = {
+    "/vendor/mediapipe/vision_bundle.mjs": ("vendor/mediapipe/vision_bundle.mjs", "text/javascript; charset=utf-8"),
+    "/vendor/models/blaze_face_full_range.tflite": ("vendor/models/blaze_face_full_range.tflite", "application/octet-stream"),
+    "/vendor/models/pose_landmarker_lite.task": ("vendor/models/pose_landmarker_lite.task", "application/octet-stream"),
+}
+for wasm_name in ("vision_wasm_internal", "vision_wasm_nosimd_internal", "vision_wasm_module_internal"):
+    for extension, content_type in (("js", "text/javascript; charset=utf-8"), ("wasm", "application/wasm")):
+        relative = f"vendor/mediapipe/wasm/{wasm_name}.{extension}"
+        VENDOR_ASSETS[f"/{relative}"] = (relative, content_type)
 CSP = (
-    "default-src 'none'; script-src 'self'; style-src 'self'; "
-    "img-src 'self' data: blob:; media-src blob:; connect-src 'none'; "
+    "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; "
+    "img-src 'self' data: blob:; media-src blob:; connect-src 'self'; "
     "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 )
 
@@ -51,7 +61,7 @@ class EditorHandler(BaseHTTPRequestHandler):
         if request_url.scheme or request_url.netloc:
             self._respond(400, b"Relative paths only.", head=head)
             return
-        asset = ASSETS.get(request_url.path)
+        asset = ASSETS.get(request_url.path) or VENDOR_ASSETS.get(request_url.path)
         if asset is None:
             self._respond(404, b"Not found.", head=head)
             return

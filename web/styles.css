@@ -53,6 +53,18 @@ fieldset > label { display: flex; align-items: center; gap: 8px; margin-bottom: 
 .button-row { display: flex; gap: 8px; }
 .button-row button { font-size: 13px; min-height: 36px; padding: 7px 11px; }
 .selection-count { font-size: 12px; color: #647a6d; margin: 8px 0 0; }
+.auto-panel { padding: 13px; margin: -10px 0 24px; background: #f0f6f1; border: 1px solid #d7e7db; border-radius: 9px; }
+.auto-panel .button-row { flex-wrap: wrap; }
+.auto-panel .help { margin-bottom: 0; }
+#analysisProgress { width: 100%; height: 10px; accent-color: #205b47; margin-top: 12px; }
+#analysisStatus.error { color: #ad382b; }
+.review-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d0dfd1; font-size: 12px; }
+.review-list { margin: 10px 0; padding: 0; list-style: none; max-height: 180px; overflow-y: auto; }
+.review-list li { margin: 7px 0; }
+.review-list button { font-size: 12px; min-height: 30px; padding: 4px 8px; }
+.review-list span { display: block; margin-top: 3px; color: #687969; line-height: 1.5; }
+.review-confirm { display: flex; align-items: flex-start; gap: 7px; line-height: 1.5; }
+.review-confirm input { flex-shrink: 0; margin-top: 2px; }
 .note { font-size: 12px; padding: 13px; border-radius: 8px; background: #f7f3e7; color: #736238; }
 .note p { margin: 6px 0 0; }
 .export-panel { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; }
@@ -63,5 +75,5 @@ fieldset > label { display: flex; align-items: center; gap: 8px; margin-bottom: 
 #status { grid-column: 1 / -1; margin: 0; }
 #status.error { color: #ad382b; }
 footer { padding-top: 22px; color: #7b8d80; font-size: 12px; }
-@media (max-width: 900px) { .workspace { grid-template-columns: minmax(0, 1fr); } .settings-panel { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; } .settings-panel > h2, .note { grid-column: 1 / -1; } .export-panel { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .workspace { grid-template-columns: minmax(0, 1fr); } .settings-panel { display: block; } .export-panel { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 540px) { body { padding: 24px 12px; } .file-bar { padding: 14px; gap: 12px; } .preview-panel, .settings-panel, .export-panel { padding: 14px; } .settings-panel { display: block; } .panel-heading { flex-wrap: wrap; } .transport { grid-template-columns: auto minmax(30px, 1fr); } #timeDisplay { grid-column: 2; justify-self: end; } .preview-footer span { margin-left: 0; width: 100%; } }

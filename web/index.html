@@ -36,7 +36,7 @@
           <canvas id="overlayCanvas" aria-label="用鼠标或手指拖动，画出处理区域"></canvas>
         </div>
         <video id="sourceVideo" preload="metadata" muted playsinline hidden></video>
-        <p id="drawingHint" class="drawing-hint" aria-live="polite">选区固定在画面上，不会自动追踪移动的人。</p>
+        <p id="drawingHint" class="drawing-hint" aria-live="polite">选择视频后，一键分析脸部和头部的移动范围。</p>
         <div class="transport">
           <button id="playPause" type="button" disabled>播放</button>
           <input id="timeline" type="range" min="0" max="1" step="0.01" value="0" aria-label="视频进度" disabled>
@@ -57,20 +57,36 @@
         <h2 id="settingsTitle">可选隐私处理</h2>
         <fieldset id="faceOptions" disabled>
           <legend>1. 脸部遮盖</legend>
-          <label><input type="radio" name="faceMode" value="none" checked> 不处理</label>
+          <label><input type="radio" name="faceMode" value="auto" checked> 自动跟随遮脸 / 头（推荐）</label>
+          <label><input type="radio" name="faceMode" value="none"> 不处理</label>
           <label><input type="radio" name="faceMode" value="manual"> 手动画固定遮盖区</label>
-          <p class="help">这不是自动人脸识别。遮盖区为不透明色块；可以画多个，覆盖头部移动的范围。</p>
+          <p class="help">自动检测只寻找脸部和头部的位置，不识别身份。背身时会按人体关键点扩大为遮头。也可以手动补画固定遮盖区。</p>
           <div class="button-row">
-            <button id="drawFace" type="button" disabled>画遮盖区</button>
+            <button id="drawFace" type="button" disabled>补画固定遮盖区</button>
             <button id="clearFaces" class="quiet" type="button" disabled>清除</button>
           </div>
-          <p id="faceCount" class="selection-count">尚未画遮盖区</p>
+          <p id="faceCount" class="selection-count">可选：补画自动漏掉的区域</p>
         </fieldset>
+        <div id="autoPanel" class="auto-panel">
+          <div class="button-row">
+            <button id="scanVideo" class="primary" type="button" disabled>一键分析并跟随遮盖</button>
+            <button id="cancelScan" type="button" hidden>取消分析</button>
+          </div>
+          <progress id="analysisProgress" max="100" value="0" aria-label="自动分析进度" hidden></progress>
+          <p id="analysisStatus" class="help" role="status" aria-live="polite">选择视频后开始分析。模型和视频均在本机运行。</p>
+          <p id="analysisSummary" class="selection-count" hidden></p>
+          <div id="reviewPanel" class="review-panel" hidden>
+            <strong>这些时间段需要检查</strong>
+            <p class="help">点击时间跳转，播放检查是否漏遮；需要时补画固定遮盖区。</p>
+            <ul id="reviewList" class="review-list"></ul>
+            <label class="review-confirm"><input id="reviewConfirm" type="checkbox" disabled> 我已逐段检查，可导出</label>
+          </div>
+        </div>
         <fieldset id="backgroundOptions" disabled>
           <legend>2. 环境像素化</legend>
           <label><input type="radio" name="backgroundMode" value="none" checked> 不处理</label>
           <label><input type="radio" name="backgroundMode" value="keep"> 保留框内，框外像素化</label>
-          <p class="help">这不是人体分割。框内的背景仍然可见。请尽量保留全身、球拍和球的路线。</p>
+          <p class="help">环境暂时仍需画保留框，框内背景可见。人体分割容易遮掉球和球拍，因此当前保留手动方式；请框住全身、球拍和球路。</p>
           <div class="button-row">
             <button id="drawKeep" type="button" disabled>画保留区</button>
             <button id="clearKeep" class="quiet" type="button" disabled>清除</button>
@@ -79,7 +95,7 @@
         </fieldset>
         <div class="note">
           <strong>导出前，请完整播放检查</strong>
-          <p>固定选区可能漏掉移动的人脸；环境像素化也可能保留场地线索。遮住脸后无法观察眼睛，框外的球可能看不清。请按分享目的选择。</p>
+          <p>自动分析完成也可能漏遮，请完整播放检查。手动画的框不会跟随移动；遮脸后无法观察眼睛，框外的球可能看不清。请按分享目的选择。</p>
         </div>
       </aside>
     </div>
@@ -95,7 +111,7 @@
         <a id="downloadVideo" class="button download" download hidden>下载处理后的视频</a>
       </div>
       <progress id="exportProgress" max="100" value="0" aria-label="导出进度" hidden></progress>
-      <p id="status" role="status" aria-live="polite">可以不打码，也可以按需开启脸部或环境处理。</p>
+      <p id="status" role="status" aria-live="polite">可以自动跟随遮盖、手动画框，也可以选择不打码。</p>
     </section>
   </main>
   <footer>当前只做隐私预处理，尚未进行动作识别或教学评分。</footer>

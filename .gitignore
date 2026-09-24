@@ -6,6 +6,7 @@
 /outputs/
 /models/
 /checkpoints/
+/web/vendor/
 
 # Raw video and model weights
 *.mp4
@@ -24,6 +25,7 @@
 *.pth
 *.onnx
 *.task
+*.tflite
 *.safetensors
 
 # Secrets and local settings
