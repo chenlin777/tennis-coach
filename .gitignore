@@ -1,0 +1,56 @@
+# Local recordings, student records, generated analysis and private datasets
+/local/
+/data/
+/datasets/
+/videos/
+/outputs/
+/models/
+/checkpoints/
+
+# Raw video and model weights
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.m4v
+*.MP4
+*.MOV
+*.AVI
+*.MKV
+*.WEBM
+*.M4V
+*.pt
+*.pth
+*.onnx
+*.task
+*.safetensors
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python and JavaScript development artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+node_modules/
+dist/
+build/
+coverage/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
