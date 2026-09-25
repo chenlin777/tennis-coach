@@ -1,0 +1,129 @@
+{
+  "schema_version": "0.1",
+  "source_id": null,
+  "parent_raw_path": null,
+  "clip_id": null,
+  "clip_path": null,
+  "redacted_path": null,
+  "start_seconds": null,
+  "end_seconds": null,
+  "boundary_review": "pending",
+  "person_id": null,
+  "session_id": null,
+  "source_group_id": null,
+  "source": {
+    "platform": "unknown",
+    "url": null,
+    "creator_display_name": null,
+    "acquired_on": null,
+    "license_or_permission": "unknown",
+    "permission_evidence": null,
+    "participant_consent": "unknown",
+    "allowed_uses": {
+      "training": "unknown",
+      "publish_raw": "unknown",
+      "publish_redacted": "unknown",
+      "publish_labels": "unknown"
+    },
+    "notes": ""
+  },
+  "capture": {
+    "camera_view": "unknown",
+    "handedness": "unknown",
+    "scene": "unknown",
+    "training_intent": "",
+    "playback_speed": "unknown",
+    "contains_cuts": "unknown",
+    "contains_replays": "unknown",
+    "visibility": {
+      "full_body": "unknown",
+      "head_and_eyes": "unknown",
+      "non_dominant_hand": "unknown",
+      "racket": "unknown",
+      "ball": "unknown"
+    },
+    "notes": ""
+  },
+  "review": {
+    "status": "unreviewed",
+    "reviewer_id": null,
+    "reviewed_on": null,
+    "reviewed_file_path": null,
+    "reviewed_version": null,
+    "overall_judgment": null,
+    "summary": "",
+    "highest_priority": null,
+    "criteria": {
+      "eyes_follow_ball": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      },
+      "non_dominant_arm": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      },
+      "contact_in_front": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      },
+      "follow_through": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      },
+      "knee_bend_and_body_height": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      },
+      "movement_and_positioning": {
+        "judgment": null,
+        "reason_unobservable": "",
+        "observations": []
+      }
+    },
+    "strokes": []
+  },
+  "template_help": {
+    "time_reference": "start_seconds 和 end_seconds 是原片时间；观察和单次击球的时间是短片内从 0 开始的秒数。",
+    "unknown_values": "尚未知的标识、路径和时间填 null；尚未由教练判断的 judgment 保持 null。",
+    "review_status_values": ["unreviewed", "in_progress", "reviewed"],
+    "boundary_review_values": ["pending", "accepted", "needs_recut"],
+    "judgment_values": ["good", "needs_improvement", "unobservable", "context_dependent"],
+    "judgment_labels": {
+      "good": "好",
+      "needs_improvement": "需改进",
+      "unobservable": "无法判断",
+      "context_dependent": "依情境"
+    },
+    "camera_view_values": ["front", "rear", "dominant_side", "non_dominant_side", "oblique", "changing", "unknown"],
+    "handedness_values": ["right", "left", "unknown"],
+    "scene_values": ["wall", "fed_ball", "rally", "match", "other", "unknown"],
+    "visibility_values": ["clear", "partial", "not_visible", "unknown"],
+    "playback_speed_values": ["normal", "slow_motion", "variable", "unknown"],
+    "tri_state_values": ["yes", "no", "unknown"],
+    "allowed_use_values": ["allowed", "not_allowed", "unknown"],
+    "reviewed_version_values": ["raw", "clip", "redacted"],
+    "priority_values": ["high", "medium", "low", "none"],
+    "observation_template": {
+      "start_seconds": null,
+      "end_seconds": null,
+      "visible_fact": "",
+      "coach_interpretation": "",
+      "priority": null,
+      "suggestion": ""
+    },
+    "stroke_template": {
+      "stroke_id": "",
+      "start_seconds": null,
+      "contact_seconds": null,
+      "end_seconds": null,
+      "notes": ""
+    },
+    "eyes_redacted": "所看的版本遮住眼部时，eyes_follow_ball.judgment 应为 unobservable，并说明遮挡；不能据此标为 needs_improvement。",
+    "no_automatic_coach_labels": "所有教学判断由教练填写；工具不因成功下载、剪辑、检测到人体或示范者身份自动标注好坏。"
+  }
+}

@@ -1,0 +1,4 @@
+# Local download / clipping tools. These are separate from the browser app.
+yt-dlp[default]==2026.8.19
+deno==2.9.7
+imageio-ffmpeg==0.6.0

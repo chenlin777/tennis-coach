@@ -58,3 +58,23 @@ app; they are excluded from the Git repository.
 
 If redistributing a bundle that includes these dependencies or models, preserve
 their license texts and attribution rather than relabeling them as MIT.
+
+## Optional dataset tools
+
+`requirements-data.txt` separately pins `yt-dlp[default]` 2026.8.19,
+`deno` 2.9.7, and `imageio-ffmpeg` 0.6.0. They are installed in the ignored
+project `.venv`; their executables and dependencies are not committed here.
+
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) handles individual video URLs.
+  Its source is under the Unlicense; bundled and installed dependencies retain
+  their own licenses. The default extra includes the EJS support package.
+- [Deno](https://github.com/denoland/deno) provides the JavaScript runtime used
+  by yt-dlp. The installer preserves the Python distribution's packaged notices.
+- [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) supplies the Python
+  wrapper and a platform-specific FFmpeg executable. FFmpeg licensing depends
+  on the build and enabled components; consult the installed executable's
+  `-L` output and [FFmpeg's licensing information](https://ffmpeg.org/legal.html)
+  before redistributing its binaries.
+
+Media-source permissions are recorded separately from tool licenses. A
+successful download does not establish permission to republish that footage.
