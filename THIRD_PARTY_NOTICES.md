@@ -61,13 +61,18 @@ their license texts and attribution rather than relabeling them as MIT.
 
 ## Optional dataset tools
 
-`requirements-data.txt` separately pins `yt-dlp[default]` 2026.8.19,
+`requirements-data.txt` separately pins `yt-dlp[default,curl-cffi]` 2026.8.19,
+`curl-cffi` 0.16.3,
 `deno` 2.9.7, and `imageio-ffmpeg` 0.6.0. They are installed in the ignored
 project `.venv`; their executables and dependencies are not committed here.
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) handles individual video URLs.
   Its source is under the Unlicense; bundled and installed dependencies retain
   their own licenses. The default extra includes the EJS support package.
+- [curl_cffi](https://github.com/lexiforest/curl_cffi) supplies browser-compatible
+  HTTP requests required by some public video extractors, including Dailymotion.
+  Its Python binding is MIT-licensed; bundled libraries retain their notices.
+  It does not supply login cookies or account credentials.
 - [Deno](https://github.com/denoland/deno) provides the JavaScript runtime used
   by yt-dlp. The installer preserves the Python distribution's packaged notices.
 - [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) supplies the Python

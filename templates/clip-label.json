@@ -87,6 +87,7 @@
     },
     "strokes": []
   },
+  "assistant_review": null,
   "template_help": {
     "time_reference": "start_seconds 和 end_seconds 是原片时间；观察和单次击球的时间是短片内从 0 开始的秒数。",
     "unknown_values": "尚未知的标识、路径和时间填 null；尚未由教练判断的 judgment 保持 null。",
@@ -124,6 +125,7 @@
       "notes": ""
     },
     "eyes_redacted": "所看的版本遮住眼部时，eyes_follow_ball.judgment 应为 unobservable，并说明遮挡；不能据此标为 needs_improvement。",
-    "no_automatic_coach_labels": "所有教学判断由教练填写；工具不因成功下载、剪辑、检测到人体或示范者身份自动标注好坏。"
+    "no_automatic_coach_labels": "review 只保存教练确认或口述的判断。经授权，助手可在 assistant_review 单独填写待复核初标；下载、剪辑或检测到人体不自动产生好坏结论。",
+    "assistant_review": "初标记录 author=assistant、status=draft、requires_coach_review=true，以及六项观察、短片内时间、可见事实、初步解释和建议。格式与导入见 docs/ASSISTANT_REVIEW.md；未经教练确认不能视为训练真值。"
   }
 }

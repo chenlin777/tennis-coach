@@ -247,7 +247,7 @@ def prepare(raw, source, windows, minimum, maximum):
 
 def rebuild_index():
     fields = ["clip_id", "source_id", "source_group_id", "parent_raw_path", "clip_path", "label_path",
-              "start_seconds", "end_seconds", "encoded_duration", "source_url", "review_status", "boundary_review"]
+              "start_seconds", "end_seconds", "encoded_duration", "source_url", "review_status", "assistant_review_status", "boundary_review"]
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=fields, extrasaction="ignore")
     writer.writeheader()
@@ -255,6 +255,7 @@ def rebuild_index():
         record = json.loads(item.read_text(encoding="utf-8"))
         label = json.loads((ROOT / record["label_path"]).read_text(encoding="utf-8"))
         record["review_status"] = label["review"]["status"]
+        record["assistant_review_status"] = (label.get("assistant_review") or {}).get("status", "")
         record["boundary_review"] = label["boundary_review"]
         writer.writerow(record)
     atomic_text(DATASET / "clips.csv", buffer.getvalue(), "utf-8-sig")
