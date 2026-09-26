@@ -10,8 +10,8 @@
 <body>
   <header class="page-header">
     <nav><a href="/">视频隐私处理</a><span>TENNIS COACH · 教学原型</span></nav>
-    <h1>看看辅助手，什么时候掉下去了</h1>
-    <p>选一段正手练习视频，寻找值得慢放检查的时间点。按教练“辅助手保持抬起，击球时向后收”的经验，先试着找出下落候选。</p>
+    <h1>复看辅助手的准备与回收</h1>
+    <p>选一段正手练习视频，寻找值得慢放检查的时间点。按教练“辅助手保持抬起，击球时向后收”的经验，先试着找出偏低或下落的候选。</p>
     <p class="local-note">视频只在本机浏览器中处理，原文件不会改变。建议 10–20 秒，最长 60 秒。</p>
   </header>
   <main>
@@ -25,7 +25,7 @@
         <h2 id="previewTitle">画面与动作证据</h2>
         <div id="emptyPreview" class="empty-preview">选择视频后，可慢放查看动作。</div>
         <div id="stage" class="stage" hidden>
-          <canvas id="previewCanvas" tabindex="0" aria-label="动作画面；选择人物模式下，点击要分析的人的躯干"></canvas>
+          <canvas id="previewCanvas" tabindex="0" aria-label="动作画面；可点选人物或拖动框出分析区域"></canvas>
         </div>
         <video id="sourceVideo" preload="metadata" muted playsinline hidden></video>
         <div class="transport">
@@ -39,6 +39,20 @@
           <label><input id="showSkeleton" type="checkbox" checked> 显示肩、肘、腕、髋</label>
         </div>
         <p id="frameStatus" class="help">分析后，关键点会叠加在对应画面上。点位缺失时不补画动作。</p>
+        <div class="region-panel">
+          <div class="button-row"><button id="chooseRegion" type="button" aria-pressed="false" disabled>框出分析区域</button><button id="clearRegion" type="button" disabled>恢复整个画面</button></div>
+          <p id="regionStatus" class="help" role="status">有画中画或人物较小时，可框住击球者，排除其他画面。请留出全身、球拍和移动空间；整段视频使用同一个区域。</p>
+          <details class="region-inputs"><summary>用数值设置区域</summary>
+            <p class="help">以下数字是画面宽高的百分比，左上角为 0。宽、高至少为 5%。</p>
+            <div class="region-grid">
+              <label for="regionX">左边距 %<input id="regionX" type="number" min="0" max="95" step="0.1" value="0" disabled></label>
+              <label for="regionY">上边距 %<input id="regionY" type="number" min="0" max="95" step="0.1" value="0" disabled></label>
+              <label for="regionWidth">宽度 %<input id="regionWidth" type="number" min="5" max="100" step="0.1" value="100" disabled></label>
+              <label for="regionHeight">高度 %<input id="regionHeight" type="number" min="5" max="100" step="0.1" value="100" disabled></label>
+            </div>
+            <button id="applyRegion" type="button" disabled>应用区域</button>
+          </details>
+        </div>
         <div class="target-panel">
           <div class="button-row"><button id="chooseTarget" type="button" aria-pressed="false" disabled>选择分析人物</button><button id="clearTarget" type="button" disabled>清除人物选择</button></div>
           <p id="targetStatus" class="help">有旁观者或画中画时，请暂停并点选击球者的躯干。建议在片头选择；分析后核对关键点是否跟对人。</p>

@@ -1,5 +1,6 @@
 import { scanPoses } from './pose_analysis.js';
 import { analyzeArm, ARM_RULES_VERSION } from './arm_rules.js';
+import { normalizeRegion, cropRect } from './pose_region.js';
 
 const $ = (id) => document.getElementById(id);
 const video = $('sourceVideo');
@@ -10,6 +11,7 @@ const state = {
   file: null, url: null, ready: false, epoch: 0, controller: null,
   poses: null, result: null, resultOptions: null, target: null, targetTime: 0,
   selecting: false, keyboardPoint: { x: 0.5, y: 0.5 }, animation: null,
+  region: null, selectingRegion: false, regionDrag: null,
   loadId: 0, metadataController: null, metadataReadyLoadId: null, measuredDuration: null,
   firstFrameCallback: null,
 };
@@ -27,6 +29,7 @@ function options() {
     mirrored: $('mirrored').checked,
     target: state.target ? { ...state.target } : null,
     targetTime: state.targetTime,
+    region: state.region ? { ...state.region } : null,
   };
 }
 
@@ -66,6 +69,11 @@ function updateControls() {
   $('chooseTarget').setAttribute('aria-pressed', String(state.selecting));
   $('chooseTarget').textContent = state.selecting ? '取消选择人物' : '选择分析人物';
   $('stage').classList.toggle('selecting', state.selecting);
+  for (const id of ['chooseRegion', 'applyRegion', 'regionX', 'regionY', 'regionWidth', 'regionHeight']) $(id).disabled = !state.ready;
+  $('clearRegion').disabled = !state.region;
+  $('chooseRegion').setAttribute('aria-pressed', String(state.selectingRegion));
+  $('chooseRegion').textContent = state.selectingRegion ? '取消框选' : '框出分析区域';
+  $('stage').classList.toggle('selecting-region', state.selectingRegion);
 }
 
 function nearestFrame() {
@@ -108,6 +116,18 @@ function draw() {
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
   }
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const region = state.regionDrag ? dragRegion(state.regionDrag) : state.region;
+  if (region) {
+    const x = region.x * canvas.width, y = region.y * canvas.height;
+    const width = region.width * canvas.width, height = region.height * canvas.height;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+    ctx.fillRect(0, 0, canvas.width, y);
+    ctx.fillRect(0, y + height, canvas.width, canvas.height - y - height);
+    ctx.fillRect(0, y, x, height);
+    ctx.fillRect(x + width, y, canvas.width - x - width, height);
+    ctx.strokeStyle = '#71e6ff'; ctx.lineWidth = Math.max(2, canvas.width / 350);
+    ctx.strokeRect(x, y, width, height);
+  }
   const frame = nearestFrame();
   const landmarks = frame?.landmarks;
   if ($('showSkeleton').checked && landmarks) {
@@ -189,8 +209,8 @@ function renderResult() {
   const result = state.result;
   if (!result) return;
   const messages = {
-    candidates: `发现 ${result.candidates.length} 个辅助手下落候选。请慢放核实，这些还不是动作错误的定论。`,
-    no_candidates: '未检出辅助手下落候选。未检出不代表动作合格，也可能漏掉动作。',
+    candidates: `发现 ${result.candidates.length} 个辅助手偏低或下落的候选。请慢放核实，这些还不是动作错误的定论。`,
+    no_candidates: '未检出辅助手偏低或下落的候选。未检出不代表动作合格，也可能漏掉动作。',
     insufficient: '画面不足，暂时无法给出辅助手候选。请检查人物选择、遮挡与身体是否完整入镜。',
     context_required: '请确认持拍手和连续正手练习场景，才会生成辅助手候选。混合动作和自抛球暂时只供复看。',
   };
@@ -339,6 +359,8 @@ $('videoFile').addEventListener('change', () => {
   state.ready = false;
   state.file = file;
   state.target = null; state.targetTime = 0; state.selecting = false;
+  stopRegionSelection(); state.region = null; syncRegionInputs();
+  $('regionStatus').textContent = '有画中画或人物较小时，可框住击球者，排除其他画面。请留出全身、球拍和移动空间；整段视频使用同一个区域。';
   if (state.url) URL.revokeObjectURL(state.url);
   state.url = URL.createObjectURL(file);
   $('fileName').textContent = file.name;
@@ -403,7 +425,7 @@ video.addEventListener('ended', () => { $('playPause').textContent = '播放'; s
 $('playPause').addEventListener('click', async () => {
   if (!video.paused) video.pause();
   else {
-    state.selecting = false; updateControls();
+    state.selecting = false; stopRegionSelection(); updateControls();
     try { await video.play(); } catch { $('status').textContent = '暂时无法播放，请重新选择视频。'; }
   }
 });
@@ -412,7 +434,95 @@ $('playbackRate').addEventListener('change', () => { video.playbackRate = Number
 $('showSkeleton').addEventListener('change', draw);
 for (const id of ['handedness', 'practiceContext', 'mirrored']) $(id).addEventListener('change', settingsChanged);
 
+function syncRegionInputs() {
+  const area = state.region || { x: 0, y: 0, width: 1, height: 1 };
+  for (const [key, id] of Object.entries({ x: 'regionX', y: 'regionY', width: 'regionWidth', height: 'regionHeight' })) {
+    $(id).value = String(Math.round(area[key] * 1000) / 10);
+  }
+}
+
+function stopRegionSelection() {
+  const pointerId = state.regionDrag?.pointerId;
+  state.selectingRegion = false; state.regionDrag = null;
+  if (pointerId !== undefined && canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
+}
+
+function dragRegion(drag) {
+  return { x: Math.min(drag.start.x, drag.end.x), y: Math.min(drag.start.y, drag.end.y),
+    width: Math.abs(drag.end.x - drag.start.x), height: Math.abs(drag.end.y - drag.start.y) };
+}
+
+function applyRegion(region) {
+  if (!state.ready) return;
+  let area;
+  try {
+    area = normalizeRegion(region);
+    cropRect(area, video.videoWidth, video.videoHeight);
+  } catch (error) {
+    $('regionStatus').textContent = error.message;
+    draw(); return;
+  }
+  stopRegionSelection(); state.selecting = false;
+  if (JSON.stringify(area) !== JSON.stringify(state.region)) {
+    state.region = area;
+    if (area && state.target && (state.target.x < area.x || state.target.x > area.x + area.width ||
+        state.target.y < area.y || state.target.y > area.y + area.height)) {
+      state.target = null; state.targetTime = 0;
+      $('targetStatus').textContent = '原来的人物选择在区域外，已清除。可以在蓝框内重新点选击球者。';
+    }
+    // A crop changes what the model can see, so old poses cannot be reused.
+    invalidate();
+    $('analysisStatus').textContent = '分析范围已改变，请重新开始分析。';
+  }
+  syncRegionInputs();
+  $('regionStatus').textContent = area ? '只分析蓝框内的画面。请拖动进度检查整段视频，确保全身、球拍和移动空间一直在框内。原视频保持完整。' : '已恢复整个画面。';
+  updateControls(); draw();
+}
+
+$('chooseRegion').addEventListener('click', () => {
+  if (state.selectingRegion) {
+    stopRegionSelection();
+    $('regionStatus').textContent = state.region ? '保留原来的分析区域。' : '已取消框选，仍分析整个画面。';
+  } else {
+    video.pause(); state.selecting = false; state.selectingRegion = true;
+    $('regionStatus').textContent = '在画面上拖动框出击球者及其移动范围，松开应用。也可以展开“用数值设置区域”；按 Esc 取消。';
+    canvas.focus();
+  }
+  updateControls(); draw();
+});
+$('clearRegion').addEventListener('click', () => applyRegion(null));
+$('applyRegion').addEventListener('click', () => applyRegion({
+  x: $('regionX').valueAsNumber / 100, y: $('regionY').valueAsNumber / 100,
+  width: $('regionWidth').valueAsNumber / 100, height: $('regionHeight').valueAsNumber / 100,
+}));
+
+canvas.addEventListener('pointerdown', (event) => {
+  if (!state.selectingRegion || !state.ready || event.button !== 0 || state.regionDrag) return;
+  const point = canvasPoint(event);
+  if (!point) return;
+  event.preventDefault();
+  state.regionDrag = { pointerId: event.pointerId, start: point, end: point };
+  canvas.setPointerCapture(event.pointerId); draw();
+});
+canvas.addEventListener('pointermove', (event) => {
+  if (state.regionDrag?.pointerId !== event.pointerId) return;
+  event.preventDefault(); state.regionDrag.end = canvasPoint(event, true); draw();
+});
+canvas.addEventListener('pointerup', (event) => {
+  if (state.regionDrag?.pointerId !== event.pointerId) return;
+  event.preventDefault(); state.regionDrag.end = canvasPoint(event, true);
+  const area = dragRegion(state.regionDrag);
+  state.regionDrag = null;
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  applyRegion(area);
+});
+for (const name of ['pointercancel', 'lostpointercapture']) canvas.addEventListener(name, (event) => {
+  if (state.regionDrag?.pointerId !== event.pointerId) return;
+  state.regionDrag = null; draw();
+});
+
 $('chooseTarget').addEventListener('click', () => {
+  stopRegionSelection();
   state.selecting = !state.selecting;
   video.pause();
   $('targetStatus').textContent = state.selecting ? '点击要分析的人的躯干，不要点球拍或背景。也可以用方向键移动十字，再按回车确认。' : state.target ? `已在 ${clock(state.targetTime)} 选择人物。可重新点选，或清除后自动选择。` : '单人可直接分析；多人时请点选目标的躯干。';
@@ -421,6 +531,11 @@ $('chooseTarget').addEventListener('click', () => {
 });
 
 function selectTarget(point) {
+  if (state.region && (point.x < state.region.x || point.x > state.region.x + state.region.width ||
+      point.y < state.region.y || point.y > state.region.y + state.region.height)) {
+    $('targetStatus').textContent = '请在蓝框内选择击球者，或先扩大分析区域。';
+    return;
+  }
   state.target = point;
   state.targetTime = video.currentTime;
   state.selecting = false;
@@ -430,16 +545,26 @@ function selectTarget(point) {
 
 canvas.addEventListener('click', (event) => {
   if (!state.selecting || !state.ready) return;
+  const point = canvasPoint(event);
+  if (point) selectTarget(point);
+});
+
+function canvasPoint(event, bounded = false) {
   const rect = canvas.getBoundingClientRect();
   const scale = Math.min(rect.width / canvas.width, rect.height / canvas.height);
   const width = canvas.width * scale, height = canvas.height * scale;
   const x = (event.clientX - rect.left - (rect.width - width) / 2) / width;
   const y = (event.clientY - rect.top - (rect.height - height) / 2) / height;
-  if (x < 0 || x > 1 || y < 0 || y > 1) return;
-  selectTarget({ x, y });
-});
+  if (!bounded && (x < 0 || x > 1 || y < 0 || y > 1)) return null;
+  return { x: clamp(x, 0, 1), y: clamp(y, 0, 1) };
+}
 
 canvas.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && state.selectingRegion) {
+    event.preventDefault(); stopRegionSelection(); updateControls(); draw();
+    $('regionStatus').textContent = state.region ? '保留原来的分析区域。' : '已取消框选，仍分析整个画面。';
+    return;
+  }
   if (!state.selecting || !state.ready) return;
   const movements = { ArrowLeft: [-0.02, 0], ArrowRight: [0.02, 0], ArrowUp: [0, -0.02], ArrowDown: [0, 0.02] };
   if (movements[event.key]) {
@@ -463,7 +588,7 @@ $('clearTarget').addEventListener('click', () => {
 $('analyzeButton').addEventListener('click', async () => {
   if (!state.ready || state.controller) return;
   invalidate();
-  video.pause(); state.selecting = false;
+  video.pause(); state.selecting = false; stopRegionSelection();
   const epoch = state.epoch;
   const file = state.file;
   const controller = new AbortController(); state.controller = controller;
@@ -475,6 +600,7 @@ $('analyzeButton').addEventListener('click', async () => {
     const poses = await scanPoses(file, {
       signal: controller.signal,
       sampleFps: 12,
+      region: state.region ? { ...state.region } : null,
       onProgress(progress) {
         if (state.epoch !== epoch || controller.signal.aborted) return;
         const fraction = finite(progress.fraction) ? clamp(progress.fraction, 0, 1) : 0;
@@ -516,6 +642,7 @@ $('exportReport').addEventListener('click', () => {
       width: state.poses.width, height: state.poses.height,
     },
     options: state.resultOptions, modelVersion: state.poses.modelVersion,
+    samplingRegion: state.poses.samplingRegion ?? null,
     rulesVersion: state.result.ruleVersion || ARM_RULES_VERSION,
     sourceIdentity: 'file_metadata_only_not_content_verified',
     sampleFps: state.poses.sampleFps, result: state.result,

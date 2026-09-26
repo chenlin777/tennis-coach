@@ -1,22 +1,30 @@
 // Pose sampling runs entirely in the browser with the locally installed model.
 // It supplies observations, not coaching judgments or measured 3D biomechanics.
-export const MODEL_VERSION = "mediapipe-1.0.1/pose-lite-v1";
+import { normalizeRegion, cropRect, mapLandmark } from './pose_region.js';
+export const DEFAULT_MODEL_VARIANT = 'full';
+export const MODEL_VERSIONS = Object.freeze({lite: "mediapipe-1.0.1/pose-lite-v1", full: "mediapipe-1.0.1/pose-full-v1"});
+export const MODEL_VERSION = MODEL_VERSIONS[DEFAULT_MODEL_VARIANT];
 export const MAX_DURATION = 60;
 let modelPromise = null;
 let model = null;
+let loadedVariant = null;
 let queue = Promise.resolve();
 let lastTimestamp = 0;
 
 const abortError = () => new DOMException("已取消动作分析", "AbortError");
 function check(signal) { if (signal?.aborted) throw abortError(); }
 
-async function initialize() {
-  if (!modelPromise) {
+async function initialize(variant) {
+  if (!Object.hasOwn(MODEL_VERSIONS, variant)) throw new Error("未知的动作模型。");
+  if (!modelPromise || loadedVariant !== variant) {
+    model?.close();
+    model = null;
+    loadedVariant = variant;
     modelPromise = (async () => {
       const { FilesetResolver, PoseLandmarker } = await import("./vendor/mediapipe/vision_bundle.mjs");
       const files = await FilesetResolver.forVisionTasks("./vendor/mediapipe/wasm");
       model = await PoseLandmarker.createFromOptions(files, {
-        baseOptions: { modelAssetPath: "./vendor/models/pose_landmarker_lite.task", delegate: "CPU" },
+        baseOptions: { modelAssetPath: `./vendor/models/pose_landmarker_${variant}.task`, delegate: "CPU" },
         runningMode: "IMAGE", numPoses: 4, minPoseDetectionConfidence: 0.45,
         minPosePresenceConfidence: 0.45, minTrackingConfidence: 0.5, outputSegmentationMasks: false,
       });
@@ -76,8 +84,10 @@ async function seek(video, time, signal) {
   check(signal);
 }
 
-async function sample(file, { signal, onProgress = () => {}, sampleFps = 12 } = {}) {
+async function sample(file, { signal, onProgress = () => {}, sampleFps = 12, modelVariant = DEFAULT_MODEL_VARIANT, region = null } = {}) {
   check(signal);
+  const selectedRegion = normalizeRegion(region);
+  if (!Object.hasOwn(MODEL_VERSIONS, modelVariant)) throw new Error("未知的动作模型。");
   if (!(file instanceof Blob) || !file.size) throw new Error("请选择有效的视频文件。");
   if (file.size > 1024 * 1024 * 1024) throw new Error("视频过大，请先剪成 10–20 秒的短片。");
   if (!Number.isFinite(sampleFps) || sampleFps < 1 || sampleFps > 15) throw new Error("分析采样率应在 1–15 帧/秒之间。");
@@ -107,7 +117,8 @@ async function sample(file, { signal, onProgress = () => {}, sampleFps = 12 } = 
     const duration = video.duration;
     if (!Number.isFinite(duration) || duration <= 0 || !video.videoWidth) throw new Error("无法确定视频时长或画面尺寸。");
     if (duration > MAX_DURATION + 0.1) throw new Error("这一版每次分析最长 60 秒，请先剪成 10–20 秒短片。");
-    const pose = await initialize();
+    const crop = cropRect(selectedRegion, video.videoWidth, video.videoHeight);
+    const pose = await initialize(modelVariant);
     check(scanSignal);
     // Rebuild tracking state between files. Access is serialized by scanPoses.
     await pose.setOptions({ runningMode: "IMAGE" });
@@ -115,9 +126,9 @@ async function sample(file, { signal, onProgress = () => {}, sampleFps = 12 } = 
     check(scanSignal);
     const timestampBase = Math.max(performance.now(), lastTimestamp + 1000);
     const canvas = document.createElement("canvas");
-    const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight));
-    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const scale = Math.min(1, 1280 / Math.max(crop.sw, crop.sh));
+    canvas.width = Math.max(1, Math.round(crop.sw * scale));
+    canvas.height = Math.max(1, Math.round(crop.sh * scale));
     const context = canvas.getContext("2d", { alpha: false });
     const frames = [];
     const count = Math.ceil(duration * sampleFps) + 1;
@@ -126,13 +137,16 @@ async function sample(file, { signal, onProgress = () => {}, sampleFps = 12 } = 
       const time = Math.min(index / sampleFps, Math.max(0, duration - 0.001));
       if (frames.length && time <= frames[frames.length - 1].time) break;
       await seek(video, time, scanSignal);
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
       lastTimestamp = timestampBase + time * 1000;
       const result = pose.detectForVideo(canvas, lastTimestamp);
-      const poses = result.landmarks.map(points => points.map(point => ({
+      const poses = result.landmarks.map(points => points.map(point => mapLandmark({
         x: point.x, y: point.y, z: point.z,
-        visibility: point.visibility ?? 0, presence: point.presence ?? null,
-      })));
+        // An extrapolated joint outside the chosen image region is not visible
+        // evidence, even if its mapped coordinate falls inside the full video.
+        visibility: point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1 ? point.visibility ?? 0 : 0,
+        presence: point.presence ?? null,
+      }, crop, video.videoWidth, video.videoHeight)));
       frames.push({ time, poses });
       result.close?.();
       onProgress({ phase: "scanning", fraction: (index + 1) / count, time, duration });
@@ -141,7 +155,8 @@ async function sample(file, { signal, onProgress = () => {}, sampleFps = 12 } = 
     }
     check(scanSignal);
     return { frames, duration, width: video.videoWidth, height: video.videoHeight,
-      sampleFps, modelVersion: MODEL_VERSION, sampledWidth: canvas.width, sampledHeight: canvas.height };
+      sampleFps, modelVersion: MODEL_VERSIONS[modelVariant], sampledWidth: canvas.width, sampledHeight: canvas.height,
+      samplingRegion: selectedRegion ? {pixelRect: crop, sourceWidth: video.videoWidth, sourceHeight: video.videoHeight} : null };
   } finally {
     scope.abort();
     signal?.removeEventListener("abort", relay);
@@ -172,5 +187,6 @@ export async function disposePoseModel() {
     model?.close();
     model = null;
     modelPromise = null;
+    loadedVariant = null;
   } finally { release(); }
 }

@@ -94,6 +94,19 @@ class ArmRuleTests(unittest.TestCase):
             self.assertEqual(result['status'], 'candidates')
             self.assertEqual(result['summary']['coverage'], 1)
 
+    def test_hidden_elbows_do_not_discard_reliable_wrist_evidence(self):
+        results = self.evaluate("""(() => ['visibility','presence','missing'].map(kind => {
+          const frames=sequence();for(const frame of frames)for(const index of [13,14]) {
+            if(kind==='missing')frame.poses[0][index]=null;
+            else frame.poses[0][index][kind]=.1;
+          }
+          return analyzeArm(frames,options);
+        }))()""")
+        for result in results:
+            self.assertEqual(result['status'], 'candidates')
+            self.assertEqual(result['summary']['coverage'], 1)
+            self.assertEqual(result['candidates'][0]['evidence']['kind'], 'lowering_during_swing')
+
     def test_explicit_target_resolves_people_and_identity_does_not_restart(self):
         results = self.evaluate("""(() => {
           const frames=sequence();for(const frame of frames)frame.poses.push(pose(.9,.65,.1,-.3));

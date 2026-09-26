@@ -28,6 +28,7 @@ licenses are verified separately from the JavaScript package license.
 | --- | --- | --- |
 | BlazeFace full-range | `float16/1` | `web/vendor/models/blaze_face_full_range.tflite` |
 | Pose Landmarker lite | `float16/1` | `web/vendor/models/pose_landmarker_lite.task` |
+| Pose Landmarker full | `float16/1` | `web/vendor/models/pose_landmarker_full.task` |
 
 The exact Google-hosted download URLs and SHA-256 hashes are in
 `scripts/auto_assets.json`. The installer also saves the corresponding official
@@ -35,6 +36,13 @@ model cards next to the weights:
 
 - [BlazeFace full-range model card](https://storage.googleapis.com/mediapipe-assets/MediaPipe%20BlazeFace%20Model%20Card%20%28Full%20Range%29.pdf)
 - [BlazePose GHUM model card](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf)
+
+The shared BlazePose GHUM card covers both Lite and Full. Its installed copy
+retains the existing filename `web/vendor/models/pose_landmarker_lite.model-card.pdf`.
+Full is the default for auxiliary-arm analysis; Lite remains installed for
+automatic privacy masking. Heavy was evaluated locally but is not an installed
+application dependency. General pose benchmarks do not establish accuracy of
+tennis coaching judgments.
 
 The full-range face model is sensitive to face size, orientation, motion blur,
 and lighting. Its model card excludes back-of-head detection and people too far

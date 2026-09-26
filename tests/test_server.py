@@ -33,7 +33,7 @@ class StaticServerTests(unittest.TestCase):
     def test_static_assets_and_no_external_connections_policy(self):
         for path in (
             "/", "/index.html", "/app.js", "/styles.css", "/auto_privacy.js",
-            "/forehand.html", "/forehand.js", "/forehand.css", "/pose_analysis.js", "/arm_rules.js",
+            "/forehand.html", "/forehand.js", "/forehand.css", "/pose_analysis.js", "/pose_region.js", "/arm_rules.js",
         ):
             with self.subTest(path=path):
                 status, headers, body = self.request(path)
@@ -53,6 +53,7 @@ class StaticServerTests(unittest.TestCase):
             "/../local/videos/wall_practice.mp4", "/%2e%2e/local/", "/web/../local/",
             "/vendor/", "/vendor/models/", "/vendor/models/../../local/videos/wall_practice.mp4",
             "/vendor/models/not-allowlisted.tflite", "/vendor/mediapipe/../README.md",
+            "/vendor/models/pose_landmarker_heavy.task",
         ):
             with self.subTest(path=path):
                 self.assertEqual(self.request(path)[0], 404)

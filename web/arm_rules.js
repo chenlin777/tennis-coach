@@ -1,6 +1,6 @@
 // Geometric screening only: these thresholds are engineering defaults, not
 // coaching standards. No ball, racket, impact, gaze, or stroke classifier here.
-export const ARM_RULES_VERSION = 'aux-arm-2d/0.1.0';
+export const ARM_RULES_VERSION = 'aux-arm-2d/0.1.1';
 export const ARM_THRESHOLDS = Object.freeze({
   visibility: .55, presence: .55, minTorsoPixels: 18,
   maxGapSeconds: .26, maxIdentityGapSeconds: .55,
@@ -61,7 +61,9 @@ function features(person, options) {
   // Explicit mirror setting represents the anatomical index convention of the
   // mirrored input; x/y coordinates are already in displayed image space.
   if (options.mirrored) [indices.off, indices.hit] = [indices.hit, indices.off];
-  if (![...indices.off, ...indices.hit].every(i => validPoint(person.pose[i]))) return null;
+  // This rule consumes shoulders and wrists. Elbow occlusion must not discard
+  // reliable wrist evidence; a future elbow-based rule needs its own gate.
+  if (![indices.off[0], indices.off[2], indices.hit[0], indices.hit[2]].every(i => validPoint(person.pose[i]))) return null;
   const relative = index => {
     const p = px(person.pose[index], options.width, options.height);
     return {x: (p.x - person.hip.x) / person.scale, y: (p.y - person.hip.y) / person.scale};
@@ -165,7 +167,7 @@ function screenCandidates(tracked, options) {
 export function analyzeArm(inputFrames, suppliedOptions = {}) {
   const options = {width: 0, height: 0, duration: 0, handedness: 'unknown', context: 'unknown', mirrored: false, target: null, targetTime: 0, ...suppliedOptions};
   const limitations = [
-    '仅按二维肩、肘、腕、髋位置筛选候选，未识别球拍、来球或触球时刻。',
+    '仅按二维肩、腕、髋位置筛选候选，未识别球拍、来球或触球时刻。',
     '工程阈值尚未经过教练校准；透视、遮挡、左右手关键点交换都可能造成误报或漏报。',
     '没有提示不代表动作合格，提示也不等于已确认的技术问题。',
   ];
@@ -210,7 +212,7 @@ export function analyzeArm(inputFrames, suppliedOptions = {}) {
   function setFrame(index, person) {
     const f = features(person, options);
     trackedFrames[index] = {time: frames[index].time, landmarks: person.pose, features: f,
-      status: f ? 'usable' : 'unreliable_limbs', reason: f ? '' : '肩、肘或手腕关键点置信度不足或超出画面'};
+      status: f ? 'usable' : 'unreliable_limbs', reason: f ? '' : '肩或手腕关键点置信度不足或超出画面'};
   }
   setFrame(anchor, anchorPerson);
   for (const direction of [1, -1]) {

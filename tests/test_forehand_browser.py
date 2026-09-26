@@ -17,11 +17,11 @@ FAKE_POSE_MODULE = r"""
 export const MODEL_VERSION = 'synthetic-ui-test-not-a-model';
 export const MAX_DURATION = 60;
 export function disposePoseModel() {}
-export function scanPoses(file, {signal, onProgress}) {
+export function scanPoses(file, {signal, onProgress, region}) {
   onProgress({phase:'scanning', fraction:.25, time:.5, duration:2});
   return new Promise((resolve, reject) => {
     window.__pendingPoseScans ??= [];
-    window.__pendingPoseScans.push({resolve, reject, onProgress, signal, fileName:file.name});
+    window.__pendingPoseScans.push({resolve, reject, onProgress, signal, region, fileName:file.name});
     // Intentionally ignore abort. Late callbacks must be rejected by the UI.
   });
 }
@@ -92,7 +92,8 @@ class ForehandBrowserTests(browser_helpers.BrowserTestCase):
             const scan = window.__pendingPoseScans[index];
             scan.onProgress({phase:'scanning', fraction:1, time:2, duration:2});
             scan.resolve({frames, duration:2, width:640, height:360, sampleFps:12,
-                modelVersion:'synthetic-ui-test-not-a-model', sampledWidth:640, sampledHeight:360});
+                modelVersion:'synthetic-ui-test-not-a-model', sampledWidth:640, sampledHeight:360,
+                samplingRegion:{requested:scan.region, originalWidth:640, originalHeight:360}});
         }""", {"index": index, "frames": frames or []})
 
     def download_report(self, name):
@@ -197,6 +198,99 @@ class ForehandBrowserTests(browser_helpers.BrowserTestCase):
         self.assertEqual(self.page.evaluate("() => window.__pendingPoseScans.length"), 1)
         self.load(self.second_fixture)
         expect(self.page.locator("#exportReport")).to_be_disabled()
+
+    def set_region(self, x=10, y=15, width=70, height=65):
+        self.page.locator('.region-inputs').evaluate("element => element.open=true")
+        for field, value in zip(('regionX', 'regionY', 'regionWidth', 'regionHeight'), (x, y, width, height)):
+            self.page.locator('#' + field).fill(str(value))
+        self.page.locator('#applyRegion').click()
+
+    def test_region_changes_invalidate_pose_cache_and_preserve_report_provenance(self):
+        self.use_fake_rules()
+        self.load()
+        self.start_scan()
+        self.set_region()
+        self.assertTrue(self.page.evaluate('() => window.__pendingPoseScans[0].signal.aborted'))
+        self.finish_scan()
+        expect(self.page.locator('#exportReport')).to_be_disabled()
+        self.start_scan(2)
+        region = {'x': .1, 'y': .15, 'width': .7, 'height': .65}
+        self.assertEqual(self.page.evaluate('() => window.__pendingPoseScans[1].region'), region)
+        self.finish_scan(1)
+        expect(self.page.locator('#exportReport')).to_be_enabled()
+        report = self.download_report('forehand-region-report.json')
+        self.assertEqual(report['options']['region'], region)
+        self.assertEqual(report['samplingRegion']['requested'], region)
+        self.assertEqual(report['samplingRegion']['originalWidth'], 640)
+        self.set_region(15, 20, 60, 60)
+        expect(self.page.locator('#exportReport')).to_be_disabled()
+        self.page.locator('#handedness').select_option('right')
+        expect(self.page.locator('#exportReport')).to_be_disabled()
+        self.assertEqual(self.page.evaluate('() => window.__pendingPoseScans.length'), 2)
+        self.start_scan(3)
+        self.page.locator('#clearRegion').click()
+        self.assertTrue(self.page.evaluate('() => window.__pendingPoseScans[2].signal.aborted'))
+        self.finish_scan(2)
+        expect(self.page.locator('#exportReport')).to_be_disabled()
+        self.start_scan(4)
+        self.assertIsNone(self.page.evaluate('() => window.__pendingPoseScans[3].region'))
+        self.finish_scan(3)
+        self.set_region()
+        self.load(self.second_fixture)
+        expect(self.page.locator('#clearRegion')).to_be_disabled()
+        expect(self.page.locator('#regionWidth')).to_have_value('100')
+        self.start_scan(5)
+        self.assertIsNone(self.page.evaluate('() => window.__pendingPoseScans[4].region'))
+
+    def test_region_drag_uses_picture_coordinates_and_click_does_not_select_person(self):
+        self.use_fake_rules()
+        self.load()
+        canvas = self.page.locator('#previewCanvas')
+        # A square element letterboxes the 16:9 video. Dragging in either
+        # direction must map the displayed picture, not the outer element.
+        canvas.evaluate("el => {el.style.width='400px'; el.style.height='400px';}")
+        self.page.locator('#chooseRegion').click()
+        canvas.scroll_into_view_if_needed()
+        box = canvas.bounding_box()
+        x0, y0 = box['x'], box['y'] + (400 - 225) / 2
+        self.page.mouse.click(x0 + 200, y0 + 112.5)
+        expect(self.page.locator('#clearTarget')).to_be_disabled()
+        expect(self.page.locator('#clearRegion')).to_be_disabled()
+        expect(self.page.locator('#chooseRegion')).to_have_attribute('aria-pressed', 'true')
+        self.page.mouse.move(x0 + 320, y0 + 180)
+        self.page.mouse.down()
+        self.page.mouse.move(x0 + 40, y0 + 22.5, steps=4)
+        self.page.mouse.up()
+        expect(self.page.locator('#chooseRegion')).to_have_attribute('aria-pressed', 'false')
+        expect(self.page.locator('#clearRegion')).to_be_enabled()
+        expect(self.page.locator('#clearTarget')).to_be_disabled()
+        self.start_scan()
+        region = self.page.evaluate('() => window.__pendingPoseScans[0].region')
+        for key, expected in {'x': .1, 'y': .1, 'width': .7, 'height': .7}.items():
+            self.assertAlmostEqual(region[key], expected, delta=.006)
+        self.finish_scan()
+        report = self.download_report('forehand-drag-region.json')
+        self.assertIsNone(report['options']['target'])
+
+    def test_invalid_region_and_cancelled_selection_preserve_completed_result(self):
+        self.use_fake_rules()
+        self.load()
+        self.start_scan()
+        self.finish_scan()
+        expect(self.page.locator('#exportReport')).to_be_enabled()
+        self.set_region(80, 0, 50, 100)
+        expect(self.page.locator('#regionStatus')).to_contain_text('画面内')
+        expect(self.page.locator('#exportReport')).to_be_enabled()
+        self.set_region(0, 0, 1, 100)
+        expect(self.page.locator('#regionStatus')).to_contain_text('5%')
+        expect(self.page.locator('#exportReport')).to_be_enabled()
+        self.page.locator('#chooseRegion').click()
+        self.page.locator('#previewCanvas').press('Escape')
+        expect(self.page.locator('#chooseRegion')).to_have_attribute('aria-pressed', 'false')
+        expect(self.page.locator('#exportReport')).to_be_enabled()
+        report = self.download_report('forehand-invalid-region.json')
+        self.assertIsNone(report['options']['region'])
+        self.assertEqual(self.page.evaluate('() => window.__pendingPoseScans.length'), 1)
 
     def test_candidate_and_missing_interval_seeks_keep_half_speed(self):
         self.use_fake_rules()

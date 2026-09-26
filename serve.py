@@ -21,12 +21,14 @@ ASSETS = {
     "/forehand.js": ("forehand.js", "text/javascript; charset=utf-8"),
     "/forehand.css": ("forehand.css", "text/css; charset=utf-8"),
     "/pose_analysis.js": ("pose_analysis.js", "text/javascript; charset=utf-8"),
+    "/pose_region.js": ("pose_region.js", "text/javascript; charset=utf-8"),
     "/arm_rules.js": ("arm_rules.js", "text/javascript; charset=utf-8"),
 }
 VENDOR_ASSETS = {
     "/vendor/mediapipe/vision_bundle.mjs": ("vendor/mediapipe/vision_bundle.mjs", "text/javascript; charset=utf-8"),
     "/vendor/models/blaze_face_full_range.tflite": ("vendor/models/blaze_face_full_range.tflite", "application/octet-stream"),
     "/vendor/models/pose_landmarker_lite.task": ("vendor/models/pose_landmarker_lite.task", "application/octet-stream"),
+    "/vendor/models/pose_landmarker_full.task": ("vendor/models/pose_landmarker_full.task", "application/octet-stream"),
 }
 for wasm_name in ("vision_wasm_internal", "vision_wasm_nosimd_internal", "vision_wasm_module_internal"):
     for extension, content_type in (("js", "text/javascript; charset=utf-8"), ("wasm", "application/wasm")):

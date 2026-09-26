@@ -29,6 +29,8 @@ button:disabled, select:disabled { opacity: .45; cursor: not-allowed; }
 canvas { width: 100%; height: auto; max-height: 600px; display: block; object-fit: contain; touch-action: manipulation; }
 .stage.selecting { outline: 3px solid #d89524; outline-offset: 3px; }
 .stage.selecting canvas { cursor: crosshair; }
+.stage.selecting-region { outline: 3px solid #3a9eb5; outline-offset: 3px; }
+.stage.selecting-region canvas { cursor: crosshair; touch-action: none; }
 .transport, .preview-options, .button-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .transport { flex-wrap: nowrap; margin: 14px 0; }
 #timeline { flex: 1; min-width: 35px; accent-color: #216349; }
@@ -37,6 +39,11 @@ canvas { width: 100%; height: auto; max-height: 600px; display: block; object-fi
 .preview-options select { padding: 6px; }
 input[type="checkbox"] { accent-color: #216349; }
 .target-panel { border-top: 1px solid #e2e9df; padding-top: 16px; margin-top: 18px; }
+.region-panel { border-top: 1px solid #e2e9df; padding-top: 16px; margin-top: 18px; }
+.region-inputs { margin-top: 10px; }
+.region-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+.region-grid label { display: grid; gap: 6px; font-size: .85rem; }
+.region-grid input { width: 100%; min-width: 0; padding: 8px; border: 1px solid #becdc1; border-radius: 6px; font: inherit; }
 .field { display: grid; gap: 8px; margin-bottom: 20px; font-size: .92rem; }
 .field select { width: 100%; }
 .mirror { font-size: .92rem; }
