@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>正手辅助手复看 · Tennis Coach</title>
+  <link rel="stylesheet" href="forehand.css">
+  <script type="module" src="forehand.js"></script>
+</head>
+<body>
+  <header class="page-header">
+    <nav><a href="/">视频隐私处理</a><span>TENNIS COACH · 教学原型</span></nav>
+    <h1>看看辅助手，什么时候掉下去了</h1>
+    <p>选一段正手练习视频，寻找值得慢放检查的时间点。按教练“辅助手保持抬起，击球时向后收”的经验，先试着找出下落候选。</p>
+    <p class="local-note">视频只在本机浏览器中处理，原文件不会改变。建议 10–20 秒，最长 60 秒。</p>
+  </header>
+  <main>
+    <section class="file-bar" aria-label="选择视频">
+      <label class="button primary" for="videoFile">选择本机视频</label>
+      <input id="videoFile" type="file" accept="video/*">
+      <div><strong id="fileName">尚未选择视频</strong><p id="fileMeta">尽量让肩、肘、手腕和髋部清楚入镜。</p></div>
+    </section>
+    <div class="workspace">
+      <section class="preview-panel" aria-labelledby="previewTitle">
+        <h2 id="previewTitle">画面与动作证据</h2>
+        <div id="emptyPreview" class="empty-preview">选择视频后，可慢放查看动作。</div>
+        <div id="stage" class="stage" hidden>
+          <canvas id="previewCanvas" tabindex="0" aria-label="动作画面；选择人物模式下，点击要分析的人的躯干"></canvas>
+        </div>
+        <video id="sourceVideo" preload="metadata" muted playsinline hidden></video>
+        <div class="transport">
+          <button id="playPause" type="button" disabled>播放</button>
+          <input id="timeline" type="range" min="0" max="1" step="0.01" value="0" aria-label="视频进度" disabled>
+          <output id="timeDisplay">00:00.0 / 00:00.0</output>
+        </div>
+        <div class="preview-options">
+          <label for="playbackRate">播放速度</label>
+          <select id="playbackRate" disabled><option value="1">正常速度</option><option value="0.5">0.5 倍</option><option value="0.25">0.25 倍</option></select>
+          <label><input id="showSkeleton" type="checkbox" checked> 显示肩、肘、腕、髋</label>
+        </div>
+        <p id="frameStatus" class="help">分析后，关键点会叠加在对应画面上。点位缺失时不补画动作。</p>
+        <div class="target-panel">
+          <div class="button-row"><button id="chooseTarget" type="button" aria-pressed="false" disabled>选择分析人物</button><button id="clearTarget" type="button" disabled>清除人物选择</button></div>
+          <p id="targetStatus" class="help">有旁观者或画中画时，请暂停并点选击球者的躯干。建议在片头选择；分析后核对关键点是否跟对人。</p>
+        </div>
+      </section>
+      <aside class="settings-panel">
+        <h2>先说明这段练习</h2>
+        <label class="field" for="handedness">持拍手<select id="handedness"><option value="unknown">尚未选择</option><option value="right">右手持拍</option><option value="left">左手持拍</option></select></label>
+        <label class="field" for="practiceContext">片段内容<select id="practiceContext"><option value="unknown">尚未选择</option><option value="forehand">连续正手练习</option><option value="mixed">正反手混合 / 其他动作</option><option value="self_feed">自抛球练习</option></select></label>
+        <label class="mirror"><input id="mirrored" type="checkbox"> 视频经过左右镜像</label>
+        <p class="help">镜像选项只帮助识别持拍手，不翻转画面。混合动作、自抛球或信息未选全时，仅展示姿态和需复看片段。</p>
+        <div class="button-row"><button id="analyzeButton" class="primary" type="button" disabled>分析辅助手</button><button id="cancelAnalysis" type="button" hidden>取消</button></div>
+        <progress id="analysisProgress" max="100" value="0" aria-label="分析进度" hidden></progress>
+        <p id="analysisStatus" role="status" aria-live="polite">选择视频后开始。首次使用请先运行 setup-auto.cmd，安装本地模型。</p>
+        <div class="method-note"><strong>这次能帮你看什么</strong><p>先定位“挥拍附近，辅助手偏低或提前下落”的可疑片段，再由画面核实。尚不能确认触球时刻、朝球方向或向后收肘是否正确。</p><p>当前没有综合评分，也不会自动写入教练已确认标签。</p></div>
+      </aside>
+    </div>
+    <section class="results-panel" aria-labelledby="resultsTitle">
+      <div class="result-heading"><div><h2 id="resultsTitle">值得复看的时间点</h2><p id="resultsStatus" role="status" aria-live="polite">分析完成后显示结果。</p></div><button id="exportReport" type="button" disabled>导出初步报告 JSON</button></div>
+      <p id="coverage" class="help"></p>
+      <ol id="candidateList" class="candidate-list"></ol>
+      <details id="reviewDetails" hidden><summary>画面不足与需人工复看的片段</summary><ul id="reviewList" class="review-list"></ul></details>
+      <ul id="limitations" class="limitations"></ul>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">报告是待教练复核的初步提示；没有检出候选，不代表动作合格。</p>
+  </main>
+</body>
+</html>

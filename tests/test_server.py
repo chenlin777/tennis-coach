@@ -31,7 +31,10 @@ class StaticServerTests(unittest.TestCase):
             connection.close()
 
     def test_static_assets_and_no_external_connections_policy(self):
-        for path in ("/", "/index.html", "/app.js", "/styles.css", "/auto_privacy.js"):
+        for path in (
+            "/", "/index.html", "/app.js", "/styles.css", "/auto_privacy.js",
+            "/forehand.html", "/forehand.js", "/forehand.css", "/pose_analysis.js", "/arm_rules.js",
+        ):
             with self.subTest(path=path):
                 status, headers, body = self.request(path)
                 self.assertEqual(status, 200)

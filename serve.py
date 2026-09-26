@@ -1,4 +1,4 @@
-"""Serve only the privacy editor's static files on this computer.
+"""Serve only Tennis Coach's allowlisted static files on this computer.
 
 No video upload endpoint, repository browsing, or third-party packages.
 """
@@ -17,6 +17,11 @@ ASSETS = {
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/auto_privacy.js": ("auto_privacy.js", "text/javascript; charset=utf-8"),
+    "/forehand.html": ("forehand.html", "text/html; charset=utf-8"),
+    "/forehand.js": ("forehand.js", "text/javascript; charset=utf-8"),
+    "/forehand.css": ("forehand.css", "text/css; charset=utf-8"),
+    "/pose_analysis.js": ("pose_analysis.js", "text/javascript; charset=utf-8"),
+    "/arm_rules.js": ("arm_rules.js", "text/javascript; charset=utf-8"),
 }
 VENDOR_ASSETS = {
     "/vendor/mediapipe/vision_bundle.mjs": ("vendor/mediapipe/vision_bundle.mjs", "text/javascript; charset=utf-8"),
@@ -91,6 +96,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--open", action="store_true", help="Open the local editor in a browser")
+    parser.add_argument("--page", choices=("privacy", "forehand"), default="privacy", help="Which local page to open")
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("Port must be between 1 and 65535.")
@@ -98,8 +104,8 @@ def main():
         server = ThreadingHTTPServer(("127.0.0.1", args.port), EditorHandler)
     except OSError as exc:
         parser.exit(1, f"Cannot start the local editor: {exc}\nTry another port with --port 8766.\n")
-    address = f"http://127.0.0.1:{args.port}/"
-    print(f"Tennis Coach privacy editor: {address}", flush=True)
+    address = f"http://127.0.0.1:{args.port}/" + ("forehand.html" if args.page == "forehand" else "")
+    print(f"Tennis Coach {args.page}: {address}", flush=True)
     print("Files are processed in your browser. Press Ctrl+C to stop.", flush=True)
     if args.open:
         webbrowser.open(address)
